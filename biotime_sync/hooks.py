@@ -256,3 +256,16 @@ app_license = "mit"
 # List of apps whose translatable strings should be excluded from this app's translations.
 # ignore_translatable_strings_from = []
 
+fixtures = [
+    # Export all Custom Fields added to any standard DocType
+    "Custom Field",
+    
+    # Export Client Scripts created via the Desk
+    "Client Script",
+    
+    # Export Server Scripts created via the Desk
+    "Server Script",
+    
+    # Optional: Export Property Setters (labels, mandatory fields, etc.)
+    "Property Setter"
+]
