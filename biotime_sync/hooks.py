@@ -9,7 +9,7 @@ app_license = "mit"
 # ------------------
 
 # required_apps = []
-
+required_apps = ["hrms"]
 # Each item in the list will be shown as an app in the apps page
 # add_to_apps_screen = [
 # 	{
@@ -258,7 +258,7 @@ app_license = "mit"
 
 fixtures = [
     # Export all Custom Fields added to any standard DocType
-    "Custom Field",
+    {"dt": "Custom Field", "filters": {"module": "biotime_sync"}},
     
     # Export Client Scripts created via the Desk
     "Client Script",
@@ -267,5 +267,24 @@ fixtures = [
     "Server Script",
     
     # Optional: Export Property Setters (labels, mandatory fields, etc.)
-    "Property Setter"
+    {"dt": "Property Setter", "filters": {"module": "biotime_sync"}}
 ]
+
+doctype_list_js = {
+    "Employee Checkin": "public/js/employee_checkin.js",
+    "Employee": "public/js/employee.js"}
+
+scheduler_events = {
+    "hourly": [
+        "biotime_sync.attendance.biotime_attendance",
+
+    ],
+
+}
+
+doc_events = {
+    "Employee Checkin": {
+        "after_insert": "biotime_sync.api.process_biometric_job_card"
+    }
+}
+
