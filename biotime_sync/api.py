@@ -28,29 +28,41 @@ def process_biometric_job_card(doc, method=None):
     # Look for direct assignment first
 
  # This finds the parent Job Card names where this employee is listed
-    assigned_job_cards = frappe.get_all(
-        "Job Card Employee",
-        filters={"employee": employee_id},
-        pluck="parent"
+    assigned_job_cards = frappe.db.get_value(
+        "Job Card",
+        {
+            "employee": employee,
+            "status": ["in", ["Open", "Work In Progress"]]
+        },
+        "name"
     )
 
     if not assigned_job_cards:
-        # Worker isn't assigned to any Job Cards; exit cleanly
+        assigned_job_cards = frappe.db.get_value(
+            "Job Card Time Log",
+            {"employee": employee, "parentfield": "employees"},
+            "parent"
+        )
+        if assigned_job_cards:
+            status = frappe.db.get_value("Job Card", job_card_name, "status")
+            if status not in ["Open", "Work In Progress"]:
+                job_card_name = None
+       # Worker isn't assigned to any Job Cards; exit cleanly
         return
 
     # 3. Find if any of those assigned Job Cards are currently open or in progress
-    job_card_name = frappe.db.get_value(
+    assigned_job_cards = frappe.db.get_value(
         "Job Card",
         {
             "name": ["in", assigned_job_cards],
             "status": ["in", ["Open", "Work In Progress"]],
-            "docstatus": 1
+           # "docstatus": 1
         },
         "name"
     )
 
     # If no open job card matches their assignment, stop here
-    if not job_card_name:
+    if not assigned_job_cards:
         return
 
 
