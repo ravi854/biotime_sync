@@ -12,7 +12,7 @@ def test_connection():
     """
     # Get token from the singleton config
     cfg = frappe.get_single("BioTime Settings")
-    token = (cfg.biotime_token or "").strip()
+    token = frappe.db.get_single_value("BioTime Settings", "biotime_token" or "").strip()
     #server_ip = frappe.db.get_single_value("BioTime Settings", "server_ip")
     #server_port = frappe.db.get_single_value("BioTime Settings", "server_port")
 
@@ -26,7 +26,7 @@ def test_connection():
 
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {cfg.biotime_token}",
+        "Authorization": f"Token {cfg.biotime_token}",
     }
     params = {
         "start_time": start_time,

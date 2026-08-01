@@ -7,19 +7,19 @@ from frappe.utils import get_datetime, get_time, now_datetime, today, flt
 from frappe.utils.synchronization import filelock
 import json
 
-def checkin_exists(employee, punch_dt):
+#def checkin_exists(employee, punch_dt):
     # Treat any punch within the same minute as duplicate
-    start = punch_dt.replace(second=0, microsecond=0)
-    end = start + timedelta(minutes=1)
+ #   start = punch_dt.replace(second=0, microsecond=0)
+  #  end = start + timedelta(minutes=1)
 
-    return frappe.db.exists(
-        "Employee Checkin",
-        {
-            "employee": employee,
-            "device_id": "BioTime",
-            "time": ["between", [start, end]],
-        },
-    )
+   # return frappe.db.exists(
+    #    "Employee Checkin",
+     #   {
+      #      "employee": employee,
+       #     "device_id": "BioTime",
+        #    "time": ["between", [start, end]],
+     #   },
+   # )
 
 
 def time_diff_in_minutes(time1, time2):
@@ -29,15 +29,15 @@ def time_diff_in_minutes(time1, time2):
 
 
 def get_shift_info(employee):
-    sa = frappe.get_all(
+    rv = frappe.get_all(
         "Shift Assignment",
-        filters={"employee": employee, "docstatus": 1},
+        filters={"employee": employee, "docstatus": 1, "status": Active},
         fields=["shift_type"],
         order_by="start_date desc",
         limit=1,
     )
-    if sa:
-        return sa[0].shift_type
+    if rv:
+        return rv[0].shift_type
 
     return frappe.db.get_value("Employee", employee, "default_shift")
 
@@ -58,17 +58,27 @@ def get_log_type(employee, punch_dt, punch_state_display):
     punch_time = punch_dt.time()
 
     if punch_state_display == "Check In":
-        if punch_time > start and time_diff_in_minutes(punch_time, start) > late_grace:
+        if punch_time >= start and time_diff_in_minutes(punch_time, start) > late_grace:
             return "Late Entry"
         return "IN"
 
+
     if punch_state_display == "Check Out":
-        if punch_time < end and time_diff_in_minutes(end, punch_time) > early_grace:
+        if punch_time <= end and time_diff_in_minutes(end, punch_time) > early_grace:
             return "Early Exit"
         return "OUT"
 
-    return "IN"
+    if punch_state_display == "Job In":
+        if punch_time > start:
+            return "Job In"
+        return "job in"
 
+    if punch_state_display == "Check Out":
+        if punch_time < end:
+            return "Job Out"
+        return "job out"
+
+    return "IN"
 
 
 
@@ -245,28 +255,38 @@ def get_sync_status():
         return {"error": str(e)}
 
 
-def process_shift_based_checkin(row):
-    emp_code = row.get("emp_code")
-    punch_time = row.get("punch_time")
-    punch_state = row.get("punch_state_display")
+def process_shift_based_checkin(transaction):
+    emp_code = transaction.get("emp_code")
+    punch_time = transaction.get("punch_time")
+    punch_state = transaction.get("punch_state_display")
 
     if not (emp_code and punch_time and punch_state):
         return "skipped"
 
     punch_dt = get_datetime(punch_time)
 
-    employee = frappe.db.get_value(
-        "Employee",
-        {"custom_biotime_emp_code": emp_code},
-        "name",
-    )
+    employee = find_employee_by_code(emp_code)
+
     if not employee:
         return "skipped"
 
-    if checkin_exists(employee, punch_dt):
+    existing_checkin = frappe.db.exists("Employee Checkin", {
+            "employee": employee,
+            "time": punch_dt,
+            "device_id": device_id
+        })
+
+    #employee = frappe.db.get_value(
+     #   "Employee",
+      #  {"custom_biotime_emp_code": emp_code},
+       # "name",
+   # )
+
+
+    if existing_checkin:
         return "skipped"
 
-    log_type = get_log_type(employee, punch_dt, punch_state)
+    #log_type = get_log_type(employee, punch_dt, punch_state_display)
 
     frappe.get_doc(
         {

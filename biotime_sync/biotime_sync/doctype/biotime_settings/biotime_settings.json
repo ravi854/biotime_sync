@@ -17,6 +17,7 @@
   "details_tab",
   "biotime_url",
   "biotime_token",
+  "use_shift_based_attendance_logic",
   "column_break_milb",
   "start_year",
   "last_synced_datetime",
@@ -103,13 +104,19 @@
    "fieldtype": "Int",
    "label": "Total Synced Records",
    "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "use_shift_based_attendance_logic",
+   "fieldtype": "Check",
+   "label": "Use Shift Based Attendance Logic"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2026-07-30 13:54:07.136130",
+ "modified": "2026-08-01 12:15:53.875788",
  "modified_by": "Administrator",
  "module": "Biotime Sync",
  "name": "BioTime Settings",
